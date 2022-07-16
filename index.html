@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+    <script src="//unpkg.com/alpinejs" defer></script>
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: 1fr;
+            grid-column-gap: 5px;
+            grid-row-gap: 0px;
+        }
+
+        #filter { grid-area: 1 / 1 / 2 / 2; }
+        #events { grid-area: 1 / 2 / 2 / 5; }
+        th { cursor: pointer; }
+    </style>
+</head>
+<body x-init="fetchEvents($data)" 
+        x-data="{
+            events: [], 
+            searchName: '', 
+            searchVenue: '', 
+            searchMunicipality: '', 
+            searchMonth: '', 
+            searchYear: '',
+            filteredEvents: [],
+            sortDirection: {
+                Name: true,
+                Venue: true,
+                Municipality: true
+            },
+            sort(prop) {
+                this.filteredEvents.sort((a, b) => this.sortDirection[prop] ? a[prop].localeCompare(b[prop]) : b[prop].localeCompare(a[prop]))
+                this.sortDirection[prop] = !this.sortDirection[prop]
+            }, 
+            filter() {
+                this.filteredEvents = this.events.filter(
+                    event => event.Name.toLowerCase().includes(this.searchName.toLowerCase())
+                    && event.Venue.toLowerCase().includes(this.searchVenue.toLowerCase())
+                    && (event.Municipality.includes(this.searchMunicipality))
+                    && (event.Date.includes(`.${this.searchMonth}.`) || this.searchMonth == '')
+                    && (event.Date.endsWith(this.searchYear)))
+            }
+        }">
+
+    <main class="container-fluid">
+        <div class="grid">
+            <aside id="filter">
+                <div>
+                    <label>Име</label>
+                    <input @input="filter()" x-model="searchName" type="text" placeholder="Име">
+                    <label>Локация </label>
+                        <input @input="filter()" x-model="searchVenue" type="text" placeholder="Локация">
+                    <label>Общинско</label>
+                    <select @change="filter()" x-model="searchMunicipality">
+                        <option value="">Няма значение</option>
+                        <option value="FALSE">Не</option>
+                        <option value="TRUE">Да</option>
+                        
+                    </select>
+                    <label>Месец</label>
+                    <select @change="filter()" x-model="searchMonth">
+                        <option value="">Няма значение</option>
+                        <option value="01">Януари</option>
+                        <option value="02" >Февруари</option>
+                        <option value="03">Март</option>
+                        <option value="04">Април</option>
+                        <option value="05">Май</option>
+                        <option value="06">Юни</option>
+                        <option value="07">Юли</option>
+                        <option value="08">Август</option>
+                        <option value="09">Септември</option>
+                        <option value="10">Октомври</option>
+                        <option value="11">Ноември</option>
+                        <option value="12">Декември</option>
+                    <select>
+
+                    <label>Година</label>
+                    <select @change="filter()" x-model="searchYear">
+                        <option value="">Няма значение</option>
+                        <option value="2022">2022</option>
+                        <option value="2023">2023</option>
+                    </select>
+                
+
+                    <button @click="searchName='', searchVenue='', searchMunicipality='', searchMonth='', searchYear, filter()">Изчисти филтрите</button>
+                </div>
+            </aside>
+            <section id="events">
+                <table role="grid">
+                    <thead>
+                        <tr>     
+                            <th scope="col">Дата</th>
+                            <th @click="sort('Name')" scope="col">Име</th>
+                            <th @click="sort('Venue')" scope="col">Локация</th>
+                            <th @click="sort('Municipality')" scope="col">Общинско</th>
+                            <th scope="col">Бележки</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="event in filteredEvents">
+                            <tr>
+                                <td x-text="event.Date"></td>
+                                <td x-text="event.Name"></td>
+                                <td x-text="event.Venue"></td>
+                                <td><input type="checkbox" :checked="event.Municipality == 'TRUE'" disabled/></td>
+                                <td x-text="event.Notes"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </section>  
+        </div>
+    </main>
+    <script>
+        function fetchEvents(data) {
+            const url = `http://gsx2json.com/api?id=1vKKfJs6f_je9BxmRLsQuBRKXopcRT9SJZdxxcDPw2LY&sheet=events`
+            fetch(url)
+                .then(res => res.json())
+                .then(events => {
+                    data.events = events.rows
+                    data.filteredEvents = data.events
+                })
+        }
+    </script>
+
+</body>
+</html>
